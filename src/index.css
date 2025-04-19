@@ -1,0 +1,76 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 30% 14%;
+    --foreground: 240 10% 95%;
+
+    --card: 230 30% 18%;
+    --card-foreground: 240 10% 95%;
+
+    --popover: 230 30% 18%;
+    --popover-foreground: 240 10% 95%;
+
+    --primary: 262 86% 75%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 260 44% 30%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 262 86% 75%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 86% 75%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@keyframes hangman-draw {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.hangman-part {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: hangman-draw 0.5s ease-in-out forwards;
+}
+
+.word-letter {
+  @apply w-10 h-12 border-b-4 border-primary flex items-center justify-center text-2xl font-bold transition-all duration-300 mx-1;
+}
+
+.letter-button {
+  @apply w-9 h-9 flex items-center justify-center rounded-md text-lg font-semibold transition-all duration-200 bg-secondary/30 hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed;
+}
+
+.points-badge {
+  @apply inline-flex items-center bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.level-badge {
+  @apply inline-flex items-center bg-gradient-to-r from-violet-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium;
+}
