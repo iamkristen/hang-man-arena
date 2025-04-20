@@ -4,6 +4,7 @@ Crypto Hangman is a decentralized game where players can connect their MetaMask 
 
 🔗 Live Demo
 🟢 Play the Game Now → https://hangman-arena.netlify.app
+
 Jump in, connect your wallet, guess the crypto words, and compete on the leaderboard! 🧠🏆
 
 ## Features
