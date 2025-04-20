@@ -58,7 +58,7 @@ const NFT_REWARDS = [
     points: 2000,
     rarity: "Rare",
     color: "from-blue-500 to-cyan-500",
-    image: "/public/avatar-3.png",
+    image: "/avatar-3.png",
   },
   {
     id: "boost1",
@@ -66,7 +66,7 @@ const NFT_REWARDS = [
     points: 1000,
     rarity: "Common",
     color: "from-green-500 to-emerald-500",
-    image: "/public/avatar-1.png",
+    image: "/avatar-1.png",
   },
   {
     id: "title1",
@@ -74,7 +74,7 @@ const NFT_REWARDS = [
     points: 5000,
     rarity: "Epic",
     color: "from-orange-500 to-amber-500",
-    image: "/public/avatar-2.png",
+    image: "/avatar-2.png",
   },
 ];
 
