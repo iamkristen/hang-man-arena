@@ -16,35 +16,22 @@ import { AVATARS, usePlayer } from "../contexts/PlayerContext";
 const ProfileCreation: React.FC = () => {
   const { completePlayerProfile } = usePlayer();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
-  const [errors, setErrors] = useState({ name: "", email: "" });
+  const [nameError, setNameError] = useState("");
 
   const validateForm = (): boolean => {
-    const newErrors = { name: "", email: "" };
-    let isValid = true;
-
     if (!name.trim()) {
-      newErrors.name = "Name is required";
-      isValid = false;
+      setNameError("Name is required");
+      return false;
     }
-
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Email is invalid";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
+    setNameError("");
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      completePlayerProfile(name, email, selectedAvatar);
+      completePlayerProfile(name, selectedAvatar);
     }
   };
 
@@ -56,14 +43,17 @@ const ProfileCreation: React.FC = () => {
 
   const prevAvatar = () => {
     const currentIndex = AVATARS.indexOf(selectedAvatar);
-    const prevIndex = currentIndex === 0 ? AVATARS.length - 1 : currentIndex - 1;
+    const prevIndex =
+      currentIndex === 0 ? AVATARS.length - 1 : currentIndex - 1;
     setSelectedAvatar(AVATARS[prevIndex]);
   };
 
   return (
     <Card className="max-w-md w-full mx-auto bg-card/80 backdrop-blur">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Create Your Player Profile</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">
+          Create Your Player Profile
+        </CardTitle>
         <CardDescription className="text-center">
           Complete your profile to start playing Crypto Hangman
         </CardDescription>
@@ -77,22 +67,9 @@ const ProfileCreation: React.FC = () => {
               placeholder="Enter your game name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={errors.name ? "border-red-500" : ""}
+              className={nameError ? "border-red-500" : ""}
             />
-            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={errors.email ? "border-red-500" : ""}
-            />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+            {nameError && <p className="text-red-500 text-sm">{nameError}</p>}
           </div>
 
           <div className="space-y-2">

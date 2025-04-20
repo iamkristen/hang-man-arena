@@ -14,9 +14,10 @@ import GameInfo from "./game/GameInfo";
 import WordDisplay from "./game/WordDisplay";
 import LetterGrid from "./game/LetterGrid";
 import DifficultySelector from "./game/DifficultySelector";
+import { add } from "date-fns";
 
 const GameBoard: React.FC = () => {
-  const { player, addPoints, recordGamePlayed } = usePlayer();
+  const { player, addPointsAndRecordGame } = usePlayer();
   const [selectedDifficulty, setSelectedDifficulty] = useState<
     "easy" | "medium" | "hard"
   >("easy");
@@ -140,8 +141,7 @@ const GameBoard: React.FC = () => {
       toast.success(
         `You won! The word was ${currentWord}. You earned ${pointsEarned} points!`
       );
-      addPoints(pointsEarned);
-      recordGamePlayed(true);
+      addPointsAndRecordGame(pointsEarned, true);
     }, 500);
   };
 
@@ -154,7 +154,7 @@ const GameBoard: React.FC = () => {
     setTimeLeft(0);
     setTimeout(() => {
       toast.error(`Game over! The word was ${currentWord}`);
-      recordGamePlayed(false);
+      addPointsAndRecordGame(0, false);
     }, 500);
   };
 

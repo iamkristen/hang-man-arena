@@ -7,22 +7,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { usePlayer } from "../contexts/PlayerContext";
-import {
-  Dna,
-  GamepadIcon,
-  Trophy,
-  Wallet,
-  ClipboardCopy,
-  Check,
-} from "lucide-react";
+import { Dna, GamepadIcon, Trophy, ClipboardCopy, Check } from "lucide-react";
+import { useContract } from "@/contexts/ContractContext";
 
 const PlayerProfile: React.FC = () => {
   const { player } = usePlayer();
+  const { balance } = useContract();
   const [copied, setCopied] = useState(false);
 
-  if (!player) {
-    return null;
-  }
+  if (!player) return null;
 
   const winRate =
     player.gamesPlayed > 0
@@ -52,10 +45,12 @@ const PlayerProfile: React.FC = () => {
               )}
             </div>
             <h3 className="text-xl font-bold mb-1">{player.name}</h3>
-            <p className="text-muted-foreground text-sm mb-3">{player.email}</p>
-            <div className="flex space-x-2 mb-4">
+            <div className="flex justify-center space-x-2 mb-4">
               <span className="level-badge">Level {player.level}</span>
               <span className="points-badge">{player.points} pts</span>
+            </div>
+            <div className="flex justify-center mb-4">
+              <span className="points-badge">{balance} WND</span>
             </div>
             <div className="w-full">
               <div className="flex justify-between text-xs mb-1">
@@ -70,6 +65,7 @@ const PlayerProfile: React.FC = () => {
               </div>
             </div>
           </div>
+
           <div className="md:w-2/3">
             <h4 className="font-medium mb-4 text-muted-foreground">
               Player Stats
@@ -88,6 +84,7 @@ const PlayerProfile: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
               <Card className="bg-secondary/10">
                 <CardContent className="p-4 flex items-center">
                   <div className="mr-4 p-2 bg-green-500/20 rounded-full">
@@ -102,36 +99,23 @@ const PlayerProfile: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-secondary/10">
-                <CardContent className="p-4 flex items-center">
-                  <div className="mr-4 p-2 bg-purple-500/20 rounded-full">
-                    <Dna className="h-6 w-6 text-purple-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Player ID</p>
-                    <p className="text-sm font-medium truncate">{player.id}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-secondary/10">
+
+              <Card className="bg-secondary/10 md:col-span-2">
                 <CardContent className="p-4 flex items-start justify-between gap-4">
                   <div className="flex items-center mr-2">
-                    <div className="mr-4 p-2 bg-orange-500/20 rounded-full">
-                      <Wallet className="h-6 w-6 text-orange-500" />
+                    <div className="mr-4 p-2 bg-purple-500/20 rounded-full">
+                      <Dna className="h-6 w-6 text-purple-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Wallet</p>
+                      <p className="text-sm text-muted-foreground">Player ID</p>
                       <p className="text-sm font-medium break-all">
-                        {player.walletAddress}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {player.walletBalance} ETH
+                        {player.id}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(player.walletAddress);
+                      navigator.clipboard.writeText(player.id);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 1500);
                     }}

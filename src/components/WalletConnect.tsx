@@ -1,26 +1,74 @@
-
-import React from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { usePlayer } from "../contexts/PlayerContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { isMetaMaskInstalled } from "../utils/walletUtils";
 import { Wallet } from "lucide-react";
+import { ethers } from "ethers";
 
 const WalletConnect: React.FC = () => {
   const { connectPlayerWallet } = usePlayer();
+  const [balance, setBalance] = useState<string>("0.0000");
+  const [currentAccount, setCurrentAccount] = useState<string | null>(null);
 
-  const handleConnectWallet = () => {
-    connectPlayerWallet();
+  const getBalance = async () => {
+    try {
+      if (typeof window.ethereum !== "undefined") {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const userAddress = await signer.getAddress();
+        setCurrentAccount(userAddress);
+
+        const balanceInWei = await provider.getBalance(userAddress);
+        const balanceInETH = ethers.formatEther(balanceInWei);
+        setBalance(balanceInETH);
+      }
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+  };
+
+  const handleConnectWallet = async () => {
+    try {
+      if (typeof window.ethereum !== "undefined") {
+        await window.ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        });
+
+        await connectPlayerWallet();
+        await getBalance();
+      } else {
+        console.error("MetaMask is not available");
+      }
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+    }
   };
 
   const openMetaMaskSite = () => {
     window.open("https://metamask.io/", "_blank");
   };
 
+  useEffect(() => {
+    if (currentAccount) {
+      getBalance();
+    }
+  }, [currentAccount]);
+
   return (
     <Card className="max-w-md w-full mx-auto bg-card/80 backdrop-blur">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Connect Your Wallet</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">
+          Connect Your Wallet
+        </CardTitle>
         <CardDescription className="text-center">
           Connect your MetaMask wallet to start playing Crypto Hangman
         </CardDescription>
@@ -41,6 +89,12 @@ const WalletConnect: React.FC = () => {
             <li>• Participate in the marketplace</li>
           </ul>
         </div>
+        {currentAccount && (
+          <div className="mt-4 text-center">
+            <p className="font-medium">Wallet Connected: {currentAccount}</p>
+            <p className="mt-2">Balance: {balance} ETH</p>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col space-y-3">
         {isMetaMaskInstalled() ? (

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,27 +10,30 @@ import MarketplacePage from "./pages/Marketplace";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/MainLayout";
 import { PlayerProvider } from "./contexts/PlayerContext";
+import { ContractProvider } from "./contexts/ContractContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <PlayerProvider>
-        <Toaster />
-        <Sonner richColors />
-        <BrowserRouter>
-          <MainLayout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/game" element={<Game />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MainLayout>
-        </BrowserRouter>
-      </PlayerProvider>
+      <ContractProvider>
+        <PlayerProvider>
+          <Toaster />
+          <Sonner richColors />
+          <BrowserRouter>
+            <MainLayout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/game" element={<Game />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/marketplace" element={<MarketplacePage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </MainLayout>
+          </BrowserRouter>
+        </PlayerProvider>
+      </ContractProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

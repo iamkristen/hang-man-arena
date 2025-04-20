@@ -6,14 +6,9 @@ import React, {
   ReactNode,
 } from "react";
 import { toast } from "sonner";
-import {
-  connectWallet,
-  getBalance,
-  addWalletListener,
-} from "../utils/walletUtils";
 import { calculateLevel } from "../utils/gameUtils";
+import { useContract } from "../contexts/ContractContext";
 
-// Available avatars for player selection
 export const AVATARS = [
   "/avatar-1.png",
   "/avatar-2.png",
@@ -23,14 +18,11 @@ export const AVATARS = [
   "/avatar-6.png",
 ];
 
-// Player profile interface
 export interface PlayerProfile {
   id: string;
   name: string;
-  email: string;
   avatar: string;
   walletAddress: string;
-  walletBalance: string;
   points: number;
   level: number;
   gamesPlayed: number;
@@ -43,175 +35,155 @@ interface PlayerContextType {
   isConnected: boolean;
   isProfileComplete: boolean;
   connectPlayerWallet: () => Promise<void>;
+  disconnectPlayerWallet: () => void;
   updatePlayerProfile: (data: Partial<PlayerProfile>) => void;
-  completePlayerProfile: (name: string, email: string, avatar: string) => void;
-  addPoints: (points: number) => void;
-  recordGamePlayed: (won: boolean) => void;
+  completePlayerProfile: (name: string, avatar: string) => void;
+  addPointsAndRecordGame: (points: number, won: boolean) => void;
+  fetchAllPlayers: () => Promise<void>;
   searchPlayers: (query: string) => PlayerProfile[];
-  getPlayerById: (id: string) => PlayerProfile | undefined;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
-// Mock data for other players
-const mockPlayers: PlayerProfile[] = [
-  {
-    id: "player1",
-    name: "CryptoKing",
-    email: "crypto@example.com",
-    avatar: "/avatar-1.png",
-    walletAddress: "0x1234...5678",
-    walletBalance: "1.243",
-    points: 1250,
-    level: 5,
-    gamesPlayed: 25,
-    gamesWon: 18,
-  },
-  {
-    id: "player2",
-    name: "BlockchainQueen",
-    email: "queen@example.com",
-    avatar: "/avatar-2.png",
-    walletAddress: "0x8765...4321",
-    walletBalance: "0.876",
-    points: 980,
-    level: 4,
-    gamesPlayed: 19,
-    gamesWon: 12,
-  },
-  {
-    id: "player3",
-    name: "TokenMaster",
-    email: "master@example.com",
-    avatar: "/avatar-3.png",
-    walletAddress: "0xabcd...efgh",
-    walletBalance: "2.321",
-    points: 1890,
-    level: 7,
-    gamesPlayed: 32,
-    gamesWon: 23,
-  },
-];
-
 export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { contract, currentAccount, connectWallet } = useContract();
   const [player, setPlayer] = useState<PlayerProfile | null>(null);
-  const [players] = useState<PlayerProfile[]>(mockPlayers);
+  const [players, setPlayers] = useState<PlayerProfile[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
 
-  // Attempt to load player data from localStorage on mount
   useEffect(() => {
-    const savedPlayer = localStorage.getItem("playerProfile");
-    if (savedPlayer) {
-      const parsedPlayer = JSON.parse(savedPlayer);
-      setPlayer(parsedPlayer);
-      setIsConnected(!!parsedPlayer.walletAddress);
-      setIsProfileComplete(!!parsedPlayer.name && !!parsedPlayer.email);
-
-      // Refresh wallet balance
-      if (parsedPlayer.walletAddress) {
-        getBalance(parsedPlayer.walletAddress).then((balance) => {
-          updatePlayerProfile({ walletBalance: balance });
-        });
-      }
-    }
-
-    // Add wallet change listener
-    addWalletListener((accounts) => {
-      if (accounts.length === 0) {
-        // User disconnected wallet
-        setIsConnected(false);
-        toast.error("Wallet disconnected");
-      } else if (player && accounts[0] !== player.walletAddress) {
-        // User changed wallet
-        updatePlayerProfile({ walletAddress: accounts[0] });
-        toast.info("Wallet changed");
-      }
-    });
-  }, []);
-
-  // Save player data to localStorage whenever it changes
-  useEffect(() => {
-    if (player) {
-      localStorage.setItem("playerProfile", JSON.stringify(player));
-    }
-  }, [player]);
-
-  // Connect player wallet
-  const connectPlayerWallet = async () => {
-    try {
-      const address = await connectWallet();
-      if (address) {
-        const balance = await getBalance(address);
-
-        if (player) {
-          // Update existing player
-          updatePlayerProfile({
-            walletAddress: address,
-            walletBalance: balance,
-          });
-        } else {
-          // Create new player with wallet info
+    const fetchPlayerFromContract = async () => {
+      if (contract && currentAccount) {
+        try {
+          const data = await contract.getPlayer(currentAccount);
+          const fetched = {
+            id: currentAccount,
+            name: data.name,
+            avatar: data.avatar,
+            walletAddress: currentAccount,
+            points: Number(data.points),
+            level: Number(data.level),
+            gamesPlayed: Number(data.gamesPlayed),
+            gamesWon: Number(data.gamesWon),
+          };
+          setPlayer(fetched);
+          setIsConnected(true);
+          setIsProfileComplete(!!fetched.name && !!fetched.avatar);
+        } catch (err: any) {
+          toast.info("No profile found. Please complete your player profile.");
           setPlayer({
-            id: `player-${Date.now()}`,
+            id: currentAccount,
             name: "",
-            email: "",
             avatar: AVATARS[0],
-            walletAddress: address,
-            walletBalance: balance,
+            walletAddress: currentAccount,
             points: 0,
             level: 1,
             gamesPlayed: 0,
             gamesWon: 0,
           });
+          setIsConnected(true);
+          setIsProfileComplete(false);
         }
-
-        setIsConnected(true);
-        toast.success("Wallet connected successfully!");
       }
+    };
+
+    fetchPlayerFromContract();
+  }, [contract, currentAccount]);
+
+  const fetchAllPlayers = async () => {
+    if (!contract) return;
+    try {
+      const addresses: string[] = await contract.getAllPlayers();
+      const playerDataPromises = addresses.map(async (address) => {
+        const data = await contract.getPlayer(address);
+        return {
+          id: address,
+          name: data.name,
+          avatar: data.avatar,
+          walletAddress: address,
+          points: Number(data.points),
+          level: Number(data.level),
+          gamesPlayed: Number(data.gamesPlayed),
+          gamesWon: Number(data.gamesWon),
+        };
+      });
+      const allPlayers = await Promise.all(playerDataPromises);
+      setPlayers(allPlayers);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+      toast.error("Failed to fetch player list.");
+    }
+  };
+
+  const searchPlayers = (query: string): PlayerProfile[] => {
+    const lower = query.toLowerCase();
+    return players.filter(
+      (p) =>
+        p.walletAddress.toLowerCase() !== currentAccount?.toLowerCase() &&
+        (p.name.toLowerCase().includes(lower) ||
+          p.walletAddress.toLowerCase().includes(lower))
+    );
+  };
+
+  const connectPlayerWallet = async () => {
+    try {
+      await connectWallet();
     } catch (error) {
       toast.error("Failed to connect wallet");
-      console.error(error);
     }
   };
 
-  // Update player profile with partial data
+  const disconnectPlayerWallet = () => {
+    setPlayer(null);
+    setIsConnected(false);
+    setIsProfileComplete(false);
+  };
+
   const updatePlayerProfile = (data: Partial<PlayerProfile>) => {
     if (player) {
-      setPlayer((prev) => {
-        if (!prev) return null;
-        return { ...prev, ...data };
-      });
+      const updated = { ...player, ...data };
+      setPlayer(updated);
+      if (contract && currentAccount) {
+        contract.createOrUpdatePlayer(
+          updated.name,
+          updated.avatar,
+          updated.points,
+          updated.level,
+          updated.gamesPlayed,
+          updated.gamesWon
+        );
+      }
     }
   };
 
-  // Complete player profile after wallet connection
-  const completePlayerProfile = (
-    name: string,
-    email: string,
-    avatar: string
-  ) => {
+  const completePlayerProfile = (name: string, avatar: string) => {
     if (player) {
-      updatePlayerProfile({ name, email, avatar });
+      updatePlayerProfile({ name, avatar });
       setIsProfileComplete(true);
       toast.success("Profile created successfully!");
     }
   };
 
-  // Add points to player and recalculate level
-  const addPoints = (points: number) => {
+  const addPointsAndRecordGame = (points: number, won: boolean) => {
     if (player) {
       const newPoints = player.points + points;
       const newLevel = calculateLevel(newPoints);
+      const newGamesPlayed = player.gamesPlayed + 1;
+      const newGamesWon = won ? player.gamesWon + 1 : player.gamesWon;
 
       updatePlayerProfile({
         points: newPoints,
         level: newLevel,
+        gamesPlayed: newGamesPlayed,
+        gamesWon: newGamesWon,
       });
 
-      toast.success(`Earned ${points} points!`);
+      if (points > 0) {
+        toast.success(`Earned ${points} points!`);
+      }
 
       if (newLevel > player.level) {
         toast.success(`Leveled up to ${newLevel}!`, {
@@ -223,34 +195,6 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  // Record game played and update stats
-  const recordGamePlayed = (won: boolean) => {
-    if (player) {
-      updatePlayerProfile({
-        gamesPlayed: player.gamesPlayed + 1,
-        gamesWon: won ? player.gamesWon + 1 : player.gamesWon,
-      });
-    }
-  };
-
-  // Search players by name, email or wallet address
-  const searchPlayers = (query: string): PlayerProfile[] => {
-    if (!query) return players;
-
-    const lowerCaseQuery = query.toLowerCase();
-    return players.filter(
-      (p) =>
-        p.name.toLowerCase().includes(lowerCaseQuery) ||
-        p.email.toLowerCase().includes(lowerCaseQuery) ||
-        p.walletAddress.toLowerCase().includes(lowerCaseQuery)
-    );
-  };
-
-  // Get player by ID
-  const getPlayerById = (id: string): PlayerProfile | undefined => {
-    return players.find((p) => p.id === id);
-  };
-
   return (
     <PlayerContext.Provider
       value={{
@@ -259,12 +203,12 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
         isConnected,
         isProfileComplete,
         connectPlayerWallet,
+        disconnectPlayerWallet,
         updatePlayerProfile,
         completePlayerProfile,
-        addPoints,
-        recordGamePlayed,
+        addPointsAndRecordGame,
+        fetchAllPlayers,
         searchPlayers,
-        getPlayerById,
       }}
     >
       {children}
@@ -272,7 +216,6 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// Hook to use the player context
 export const usePlayer = () => {
   const context = useContext(PlayerContext);
   if (context === undefined) {

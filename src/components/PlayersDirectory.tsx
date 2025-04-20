@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -19,14 +19,18 @@ import {
 } from "@/components/ui/dialog";
 import { usePlayer, PlayerProfile } from "../contexts/PlayerContext";
 import { Search, Send } from "lucide-react";
-import { transferTokens } from "../utils/walletUtils";
 import { toast } from "sonner";
+import { ethers, parseEther } from "ethers";
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 const PlayersDirectory: React.FC = () => {
-  const { players, searchPlayers } = usePlayer();
+  const { players, searchPlayers, fetchAllPlayers } = usePlayer();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredPlayers, setFilteredPlayers] =
-    useState<PlayerProfile[]>(players);
+  const [filteredPlayers, setFilteredPlayers] = useState<PlayerProfile[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerProfile | null>(
     null
   );
@@ -34,15 +38,51 @@ const PlayersDirectory: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
+  useEffect(() => {
+    const loadPlayers = async () => {
+      await fetchAllPlayers();
+    };
+    loadPlayers();
+  }, [fetchAllPlayers]);
+
+  useEffect(() => {
+    setFilteredPlayers(searchPlayers(searchQuery));
+  }, [players, searchQuery, searchPlayers]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setFilteredPlayers(searchPlayers(query));
   };
 
   const openSendDialog = (player: PlayerProfile) => {
     setSelectedPlayer(player);
     setIsDialogOpen(true);
+  };
+
+  const sendMoney = async (toAddress, amount) => {
+    if (!window.ethereum) {
+      console.error("MetaMask is not available");
+      return;
+    }
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = provider.getSigner();
+
+    try {
+      const parsedAmount = parseEther(amount);
+      const tx = await (
+        await signer
+      ).sendTransaction({
+        to: toAddress,
+        value: parsedAmount,
+      });
+
+      console.log("Transaction Hash: ", tx.hash);
+      await tx.wait();
+      return tx.hash;
+    } catch (error) {
+      console.error("Error sending WND:", error);
+      toast.error("Error sending WND");
+    }
   };
 
   const handleSendTokens = async () => {
@@ -54,13 +94,13 @@ const PlayersDirectory: React.FC = () => {
         toast.error("Please enter a valid amount");
         return;
       }
-      const txHash = await transferTokens(
-        selectedPlayer.walletAddress,
-        sendAmount
-      );
+      const txHash = await sendMoney(selectedPlayer.walletAddress, sendAmount);
       if (txHash) {
         toast.success(
-          `Successfully sent ${sendAmount} ETH to ${selectedPlayer.name}`
+          `Successfully sent ${sendAmount} WND to ${selectedPlayer.name}`,
+          {
+            description: `Transaction hash: ${txHash}`,
+          }
         );
         setIsDialogOpen(false);
         setSendAmount("");
@@ -87,7 +127,7 @@ const PlayersDirectory: React.FC = () => {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search players by name, email or wallet address..."
+            placeholder="Search players by name or wallet address..."
             value={searchQuery}
             onChange={handleSearch}
             className="pl-10"
@@ -119,9 +159,6 @@ const PlayersDirectory: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-bold truncate">{player.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {player.email}
-                        </p>
                         <div className="flex space-x-2 mt-1">
                           <span className="level-badge text-xs py-0.5">
                             Level {player.level}
@@ -151,7 +188,7 @@ const PlayersDirectory: React.FC = () => {
                               Send Tokens to {selectedPlayer?.name}
                             </DialogTitle>
                             <DialogDescription>
-                              Send ETH tokens to this player as a gift or
+                              Send WND tokens to this player as a gift or
                               reward.
                             </DialogDescription>
                           </DialogHeader>
@@ -181,11 +218,11 @@ const PlayersDirectory: React.FC = () => {
                             </div>
                             <div>
                               <label className="text-sm font-medium mb-1 block">
-                                Amount (ETH)
+                                Amount (WND)
                               </label>
                               <Input
                                 type="number"
-                                placeholder="0.001"
+                                placeholder="0.0001"
                                 value={sendAmount}
                                 onChange={(e) => setSendAmount(e.target.value)}
                                 step="0.001"

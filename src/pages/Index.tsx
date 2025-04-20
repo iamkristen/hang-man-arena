@@ -157,7 +157,6 @@ const Index = () => {
 
 export default Index;
 
-// Additional components used in the Index page
 const ShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

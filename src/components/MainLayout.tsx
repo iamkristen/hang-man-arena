@@ -2,11 +2,18 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { usePlayer } from "../contexts/PlayerContext";
-import { Gamepad2, Home, User, ShoppingBag, Wallet } from "lucide-react";
+import {
+  Gamepad2,
+  Home,
+  User,
+  ShoppingBag,
+  Wallet,
+  LogOut,
+} from "lucide-react";
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { player, isConnected } = usePlayer();
+  const { player, isConnected, disconnectPlayerWallet } = usePlayer();
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -55,6 +62,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </span>
                   </Button>
                 </Link>
+                <Button
+                  size="sm"
+                  onClick={disconnectPlayerWallet}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-all duration-200"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Disconnect</span>
+                </Button>
               </div>
             ) : (
               <Button
@@ -67,7 +82,10 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
       </header>
+
       <main className="flex-1">{children}</main>
+
+      {/* Mobile Nav */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border/40">
         <div className="flex justify-around py-2">
           {navItems.map((item) => (
