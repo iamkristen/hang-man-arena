@@ -1,7 +1,10 @@
 # Crypto Hangman Game
-[![Netlify Status](https://api.netlify.com/api/v1/badges/your-badge-id/deploy-status)](https://hangman-arena.netlify.app)
 
 Crypto Hangman is a decentralized game where players can connect their MetaMask wallet, earn game points, buy point packages, redeem rewards, and compete with other players. This game integrates blockchain technology to ensure fairness, security, and transparency in transactions, allowing users to earn rewards and send tokens using the Polkadot network.
+
+🔗 Live Demo
+🟢 Play the Game Now → https://hangman-arena.netlify.app
+Jump in, connect your wallet, guess the crypto words, and compete on the leaderboard! 🧠🏆
 
 ## Features
 
