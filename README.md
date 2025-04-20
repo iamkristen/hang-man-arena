@@ -113,5 +113,5 @@ The player’s balance is fetched using the `ethers.js` library, which interacts
 
 Crypto Hangman is an innovative game that leverages blockchain technology to ensure a transparent and fair experience for players. By integrating Polkadot and MetaMask, the game allows players to earn, spend, and send tokens while collecting NFTs and tracking their progress securely on the blockchain.
 
-## License
-This project is licensed under the MIT License
+📜 License
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
